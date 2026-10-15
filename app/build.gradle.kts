@@ -15,6 +15,10 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "SPEECH_API_KEY", "\"AIzaSyCYK6D_h7L14r2Nlzsb2TnwRA15Yr8y5rs\"")
+        buildConfigField("String", "TTS_API_KEY", "\"AIzaSyBccSEGk7d71VeSBQnGvlZou35Xtr1WF9Q\"")
+        buildConfigField("String", "SPEECH_PROJECT_ID", "\"_\"")
     }
 
     compileOptions {
@@ -33,6 +37,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

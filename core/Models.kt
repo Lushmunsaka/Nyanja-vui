@@ -1,8 +1,8 @@
 package com.nynaja.vui
 
 enum class Language(val tag: String) {
-    ENGLISH("en"),
-    NYANJA("ny"),
+    ENGLISH("en-US"),
+    NYANJA("ny-ZM"),
 }
 
 data class Topic(

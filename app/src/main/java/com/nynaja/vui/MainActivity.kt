@@ -37,8 +37,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.nynaja.vui.android.AndroidAudioCapture
 import com.nynaja.vui.android.AndroidSpeechRecognizer
 import com.nynaja.vui.android.AndroidTtsEngine
+import com.nynaja.vui.android.GoogleCloudTtsEngine
+import com.nynaja.vui.android.HybridTtsEngine
 import com.nynaja.vui.android.KeywordAdminScreen
 import com.nynaja.vui.android.PersistentTopicRepository
 import kotlinx.coroutines.CancellationException
@@ -46,11 +49,13 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-    private lateinit var tts: AndroidTtsEngine
+    private lateinit var androidTts: AndroidTtsEngine
+    private lateinit var tts: TtsEngine
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        tts = AndroidTtsEngine(this)
+        androidTts = AndroidTtsEngine(this)
+        tts = HybridTtsEngine(androidTts, GoogleCloudTtsEngine(this, BuildConfig.TTS_API_KEY))
         val vocabulary = CommandVocabulary.default()
         val repository = PersistentTopicRepository(
             applicationContext,
@@ -70,7 +75,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
-        tts.shutdown()
+        androidTts.shutdown()
         super.onDestroy()
     }
 }
@@ -107,7 +112,7 @@ private fun RequestAudioPermission(onGranted: @Composable () -> Unit) {
 }
 
 @Composable
-private fun NynajaApp(repository: TopicRepository, tts: AndroidTtsEngine) {
+private fun NynajaApp(repository: TopicRepository, tts: TtsEngine) {
     var showAdmin by rememberSaveable { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
@@ -132,7 +137,7 @@ private fun NynajaApp(repository: TopicRepository, tts: AndroidTtsEngine) {
 @Composable
 private fun DialogTestScreen(
     repository: TopicRepository,
-    tts: AndroidTtsEngine,
+    tts: TtsEngine,
     onNavigateToKeywords: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -146,9 +151,32 @@ private fun DialogTestScreen(
     var input by rememberSaveable { mutableStateOf("") }
     var running by remember { mutableStateOf(false) }
 
+    val cloudAsr = remember {
+        CaptureAndTranscribeAsr(
+            capture = AndroidAudioCapture(),
+            api = GoogleV2SpeechApi(
+                apiKey = BuildConfig.SPEECH_API_KEY,
+                projectId = BuildConfig.SPEECH_PROJECT_ID,
+            ),
+        )
+    }
+
     val asr = remember {
         object : AsrEngine {
             override suspend fun listen(language: Language): RecognitionResult {
+                if (BuildConfig.SPEECH_API_KEY.isNotBlank() && BuildConfig.SPEECH_API_KEY != "YOUR_API_KEY_HERE") {
+                    val typed = textInputChannel.tryReceive().getOrNull()
+                    if (!typed.isNullOrBlank()) return RecognitionResult.Success(typed.trim())
+
+                    val cloudResult = cloudAsr.listen(language)
+                    if (cloudResult is RecognitionResult.Success) {
+                        return cloudResult
+                    }
+                    val typedAfter = textInputChannel.tryReceive().getOrNull()
+                    if (!typedAfter.isNullOrBlank()) return RecognitionResult.Success(typedAfter.trim())
+
+                    return cloudResult
+                }
                 val speechResult = speechRecognizer.listen(language)
                 if (speechResult is RecognitionResult.Success) {
                     return speechResult

@@ -1,38 +1,46 @@
 # Nynaja VUI — Voice User Interface & Health Menu
 
-**Nynaja VUI** is a menu-driven Android Voice User Interface (VUI) designed for accessible, spoken health information delivery in English and Nyanja. The app features voice-driven screen navigation, on-device speech recognition, text-to-speech synthesis, and persistent local topic management.
+**Nynaja VUI** is a menu-driven Android Voice User Interface (VUI) designed for accessible, spoken health information delivery in **English** and **Nyanja**. The system features Google Cloud Speech-to-Text and Text-to-Speech integrations, voice-driven screen navigation, on-device audio capture, and persistent local topic management.
 
 ---
 
 ## Key Features
 
-- **On-Device Speech Recognition (ASR)**: Live speech recognition via `AndroidSpeechRecognizer` using Android's native SpeechRecognizer API, backed by an interactive keyboard input fallback.
-- **Voice-Driven Navigation**: Switch screens and menus using voice commands (e.g., say `"keywords"` or `"admin"` to access topic administration, or `"dialog"` / `"menu"` to return to the voice dialog).
-- **Text-to-Speech (TTS)**: Spoken audio feedback using Android's built-in `AndroidTtsEngine`, synchronized with real-time on-screen text captions.
-- **Keyword & Command Matching**: Intelligent topic lookup and voice command handling (`stop`, `repeat`, `list`, `next`, `keywords`, `dialog`) powered by `KeywordMatcher` and `CommandVocabulary`.
-- **Persistent Local Storage**: `PersistentTopicRepository` automatically saves modified topic keywords across app restarts using local JSON storage (`topics_v1.json`), running 100% offline on-device.
-- **Keyword Administration**: An admin screen (`KeywordAdminScreen`) to view, add, or remove topic keywords per language with automatic conflict and reserved-word checks.
-- **Clean Architecture**: Pure Kotlin core logic decoupled from Android UI/SDK dependencies, making it simple to test and extend.
+- **Google Cloud Speech-to-Text Integration**: Transcribes live microphone audio using Google Cloud Speech API (`GoogleV2SpeechApi`) with BCP-47 locale mapping (`ny-ZM` for Nyanja, `en-US` for English) and PCM16 16kHz audio capture (`AndroidAudioCapture`).
+- **Google Cloud Text-to-Speech Neural Synthesis**: Synthesizes natural spoken audio responses via Google Cloud Text-to-Speech API (`GoogleCloudTtsEngine`), using Bantu phonetics (`sw-KE`) for fluent, natural Nyanja spoken responses.
+- **Hybrid Speech & TTS Fallback Engine**: Seamlessly falls back to Android's built-in `SpeechRecognizer` and `TextToSpeech` engine (`AndroidTtsEngine`), as well as keyboard text input.
+- **Voice-Driven Screen Navigation**: Navigate between app screens and menus using voice commands (e.g., say `"keywords"` or `"admin"` to switch to topic administration, or `"dialog"` / `"menu"` / `"kukambirana"` to return to the voice menu).
+- **20 Verified Health Topics**: Pre-loaded dataset containing 20 health topics (Pregnancy, Danger signs, Malaria, Nutrition, Vaccine, Labour, Postnatal, Child health, etc.) in both English and Nyanja.
+- **Persistent On-Device Local Storage**: `PersistentTopicRepository` automatically saves added topic keywords across app restarts using local JSON storage (`topics_v1.json`), running 100% offline on-device.
+- **Keyword Administration**: Admin screen (`KeywordAdminScreen`) to view, add, or remove topic keywords per language with automatic conflict and reserved-word validation.
+- **Optimized Voice Activity Detection (VAD)**: Snappy 0.6s silence detection for fast turnaround times.
 
 ---
 
-## Project Structure
+## System Architecture
 
 ```text
-app/       Android application module (MainActivity, Compose UI, Jetpack Compose setup)
-core/      Pure Kotlin domain logic (DialogManager, KeywordMatcher, CommandVocabulary, TopicRepository)
-android/   Android platform adapters (AndroidSpeechRecognizer, AndroidTtsEngine, PersistentTopicRepository, KeywordAdminScreen)
-test/      Unit tests for dialog state machine, navigation, and keyword matching (JUnit + Kotlinx Coroutines Test)
+app/       Android application module (MainActivity, Jetpack Compose UI, BuildConfig setup)
+core/      Pure Kotlin domain logic (DialogManager, KeywordMatcher, CommandVocabulary, TopicRepository, SpeechApi)
+android/   Platform adapters (AndroidAudioCapture, GoogleV2SpeechApi, GoogleCloudTtsEngine, HybridTtsEngine, PersistentTopicRepository, KeywordAdminScreen)
+test/      Unit tests for dialog state transitions, navigation, and keyword matching (JUnit + Coroutines Test)
 ```
 
 ---
 
-## Future Extensibility (Google Cloud Speech-to-Text V2)
+## Integrated Google Cloud APIs & Configuration
 
-The app is architected using a Ports and Adapters (Hexagonal) design. To integrate Google Cloud Speech-to-Text V2 for Nyanja when billing is ready:
-1. Implement `AudioCapture` to record raw PCM16 microphone audio.
-2. Implement `GoogleV2SpeechApi` in `core/SpeechApi.kt` to transcribe audio using Google's V2 API or your backend proxy.
-3. Pass `CaptureAndTranscribeAsr(audioCapture, GoogleV2SpeechApi())` into `DialogManager`.
+The app integrates two Google Cloud APIs configured via `app/build.gradle.kts`:
+
+1. **Google Cloud Speech-to-Text API**: Used for transcribing audio utterances (`SPEECH_API_KEY`).
+2. **Google Cloud Text-to-Speech API**: Used for synthesizing natural spoken responses (`TTS_API_KEY`).
+
+### Configuring API Keys (`app/build.gradle.kts`):
+```kotlin
+buildConfigField("String", "SPEECH_API_KEY", "\"YOUR_SPEECH_API_KEY\"")
+buildConfigField("String", "TTS_API_KEY", "\"YOUR_TTS_API_KEY\"")
+buildConfigField("String", "SPEECH_PROJECT_ID", "\"_\"")
+```
 
 ---
 
@@ -44,9 +52,9 @@ The app is architected using a Ports and Adapters (Hexagonal) design. To integra
 - Android Device or Emulator (Android 8.0+, API level 26+)
 
 ### Build & Run
-1. Open the project in Android Studio and let Gradle sync.
+1. Open the project in Android Studio and let Gradle sync complete.
 2. Run the `:app` configuration on an emulator or physical device.
-3. Grant **Microphone Permission** when prompted.
+3. Grant **Microphone Permission** when prompted upon launching.
 4. Click **Start session** to begin voice recognition.
 
 ---

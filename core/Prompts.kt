@@ -21,7 +21,7 @@ class Prompts(private val table: Map<PromptKey, Map<Language, String>>) {
 
         fun default() = Prompts(
             mapOf(
-                PromptKey.CHOOSE_LANGUAGE to both("Welcome. For English, say English. For Nyanja, say Nyanja."),
+                PromptKey.CHOOSE_LANGUAGE to both("Welcome. For English, say English or 1. For Nyanja, say Nyanja or 2."),
                 PromptKey.WELCOME to both("You can ask about a health topic by saying its name. Say list to hear all topics, or stop to finish."),
                 PromptKey.ASK_TOPIC to both("Which topic would you like to hear about?"),
                 PromptKey.NOT_UNDERSTOOD to both("Sorry, I did not understand. Please say the topic name again, or say list."),
@@ -86,9 +86,14 @@ class CommandVocabulary(
                     Command.KEYWORDS to setOf("keywords", "admin", "keyword screen", "admin screen"),
                     Command.DIALOG to setOf("dialog", "dialog screen", "chat", "main"),
                 ),
-                // TODO(verify with a native Nyanja speaker): add Nyanja command words.
-                // Until then Nyanja users navigate by keyword or by spoken digits only.
-                Language.NYANJA to emptyMap(),
+                Language.NYANJA to mapOf(
+                    Command.STOP to setOf("imani", "stop", "bwerera"),
+                    Command.REPEAT to setOf("bwerezani", "repeat"),
+                    Command.LIST to setOf("menyu", "menu", "list"),
+                    Command.NEXT to setOf("patsogolo", "next"),
+                    Command.KEYWORDS to setOf("mawu", "keywords"),
+                    Command.DIALOG to setOf("kukambirana", "dialog"),
+                ),
             ),
             numberWords = mapOf(
                 Language.ENGLISH to listOf(
@@ -103,6 +108,7 @@ class CommandVocabulary(
                 "english" to Language.ENGLISH, "1" to Language.ENGLISH, "one" to Language.ENGLISH,
                 "nyanja" to Language.NYANJA, "chinyanja" to Language.NYANJA,
                 "chichewa" to Language.NYANJA, "2" to Language.NYANJA, "two" to Language.NYANJA,
+                "ninja" to Language.NYANJA, "nyanjo" to Language.NYANJA, "nyanaza" to Language.NYANJA, "nanja" to Language.NYANJA,
             ),
         )
     }
