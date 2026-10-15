@@ -1,8 +1,20 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { load(it) }
+    }
+}
+
+val speechApiKey = localProperties.getProperty("SPEECH_API_KEY") ?: ""
+val ttsApiKey = localProperties.getProperty("TTS_API_KEY") ?: ""
 
 android {
     namespace = "com.nynaja.vui"
@@ -16,8 +28,8 @@ android {
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "SPEECH_API_KEY", "\"AIzaSyCYK6D_h7L14r2Nlzsb2TnwRA15Yr8y5rs\"")
-        buildConfigField("String", "TTS_API_KEY", "\"AIzaSyBccSEGk7d71VeSBQnGvlZou35Xtr1WF9Q\"")
+        buildConfigField("String", "SPEECH_API_KEY", "\"$speechApiKey\"")
+        buildConfigField("String", "TTS_API_KEY", "\"$ttsApiKey\"")
         buildConfigField("String", "SPEECH_PROJECT_ID", "\"_\"")
     }
 
