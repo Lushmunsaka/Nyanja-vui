@@ -23,7 +23,7 @@ class DialogManagerTest {
 
     private suspend fun spokenFor(asr: AsrEngine): List<String> {
         val tts = RecordingTts()
-        DialogManager(repo(), asr, tts).run()
+        DialogManager(repo(), asr, tts, askForLanguage = true).run()
         return tts.spoken.map { it.second }
     }
 

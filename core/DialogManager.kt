@@ -20,8 +20,10 @@ class DialogManager(
     private val onText: (String) -> Unit = {},
     private val onNavigateToKeywords: () -> Unit = {},
     private val onNavigateToDialog: () -> Unit = {},
+    initialLanguage: Language = Language.ENGLISH,
+    private val askForLanguage: Boolean = false,
 ) {
-    var language: Language = Language.ENGLISH
+    var language: Language = initialLanguage
         private set
 
     private var lastTopic: Topic? = null
@@ -31,7 +33,9 @@ class DialogManager(
     private enum class Outcome { OK, MISS, STOP }
 
     suspend fun run() {
-        language = chooseLanguage()
+        if (askForLanguage) {
+            language = chooseLanguage()
+        }
         if (repo.all().isEmpty()) {
             say(PromptKey.NO_TOPICS)
             say(PromptKey.GOODBYE)

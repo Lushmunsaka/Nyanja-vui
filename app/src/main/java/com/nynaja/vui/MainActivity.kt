@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -148,6 +149,7 @@ private fun DialogTestScreen(
     val captions = remember { mutableStateListOf<String>() }
     val listState = rememberLazyListState()
     val keyboard = LocalSoftwareKeyboardController.current
+    var selectedLanguage by rememberSaveable { mutableStateOf(Language.ENGLISH) }
     var input by rememberSaveable { mutableStateOf("") }
     var running by remember { mutableStateOf(false) }
 
@@ -196,6 +198,20 @@ private fun DialogTestScreen(
         modifier.padding(top = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text("Language:", style = MaterialTheme.typography.bodyLarge)
+            Language.entries.forEach { lang ->
+                FilterChip(
+                    selected = selectedLanguage == lang,
+                    onClick = { selectedLanguage = lang },
+                    label = { Text(if (lang == Language.ENGLISH) "English" else "Nyanja") },
+                    enabled = !running,
+                )
+            }
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
                 enabled = !running,
@@ -210,6 +226,8 @@ private fun DialogTestScreen(
                                 tts = tts,
                                 onText = captions::add,
                                 onNavigateToKeywords = onNavigateToKeywords,
+                                initialLanguage = selectedLanguage,
+                                askForLanguage = false,
                             ).run()
                         } catch (cancelled: CancellationException) {
                             throw cancelled
@@ -218,11 +236,11 @@ private fun DialogTestScreen(
                         }
                     }
                 },
-            ) { Text(if (running) "Session running (Voice active)" else "Start session") }
+            ) { Text(if (running) "Session running (${if (selectedLanguage == Language.ENGLISH) "English" else "Nyanja"})" else "Start session") }
             TextButton(onClick = { captions.clear() }) { Text("Clear captions") }
         }
         Text(
-            if (running) "Speak into microphone or type a command/keyword (e.g. 'keywords' to switch screen)." else "Start a session to begin voice recognition.",
+            if (running) "Speak into microphone or type a command/keyword (e.g. 'keywords' to switch screen)." else "Pick a language above and click Start session.",
             style = MaterialTheme.typography.bodyMedium,
         )
         LazyColumn(
