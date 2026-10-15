@@ -27,10 +27,11 @@ class AndroidTtsEngine(context: Context) : TtsEngine {
         if (!ready.await()) return SpeakResult.Failed("TextToSpeech failed to initialise")
 
         val locale = Locale.forLanguageTag(language.tag)
-        if (engine.isLanguageAvailable(locale) < TextToSpeech.LANG_AVAILABLE) {
-            return SpeakResult.LanguageUnsupported
+        if (engine.isLanguageAvailable(locale) >= TextToSpeech.LANG_AVAILABLE) {
+            engine.language = locale
+        } else {
+            engine.language = Locale.ENGLISH
         }
-        engine.language = locale
 
         return suspendCancellableCoroutine { cont ->
             val id = UUID.randomUUID().toString()
